@@ -1,74 +1,83 @@
-# About 3-Tier Architecture
-![image](https://github.com/user-attachments/assets/08521b10-0e41-4435-a4d9-4291931009b4)
+# AWS Three Tier Web Architecture Workshop
 
-## Project Overview
-The goal is to create a three-tier architecture on AWS, consisting of a web tier, application (app) tier, and database (DB) tier. Each tier is responsible for different parts of the application stack.
+## Description: 
+This workshop is a hands-on walk through of a three-tier web architecture in AWS. We will be manually creating the necessary network, security, app, and database components and configurations in order to run this architecture in an available and scalable manner.
 
-## Tier Breakdown
-- **Web Tier**: Uses nginx as the web server on port 80, and Node.js (React) for the front end.
-- **App Tier**: Uses Node.js as the backend application server on port 4000 and MySQL to interact with the database.
-- **DB Tier**: Uses Amazon RDS (MySQL) for the database. RDS is managed by AWS, handling updates, patches, and auto-scaling. The database is configured as a multi-AZ deployment to ensure high availability.
-
-## Purpose and Benefits
-- **High Availability**: By deploying resources across multiple Availability Zones (AZs), the system remains accessible even if one AZ fails.
-- **Fault Tolerance**: Uses auto-scaling for both web and app servers, and multi-AZ deployment for the database to handle failures.
-- **Security**: Limits access by setting security groups:
-  - Only the web tier can access the app tier on port 4000.
-  - Only the app tier can access the DB tier on port 3306.
-
-# Deploying-3-Tier-Architecture-AWS
-This project demonstrates the deployment of a scalable and highly available web application infrastructure on AWS. The architecture utilizes several key AWS services to ensure performance, reliability, and security.
-
-# Architecture Overview
-![image](https://github.com/user-attachments/assets/c1c242ea-10aa-476b-95e7-23e951effc2f)
+## Architecture Overview
+![AWS Architecture - DrawIO](https://github.com/pandacloud1/AWS_Project1/assets/134182273/3e46931f-0802-48a7-b044-22cd2afde467)
 
 In this architecture, a public-facing Application Load Balancer forwards client traffic to our web tier EC2 instances. The web tier is running Nginx webservers that are configured to serve a React.js website and redirects our API calls to the application tier’s internal facing load balancer. The internal facing load balancer then forwards that traffic to the application tier, which is written in Node.js. The application tier manipulates data in an Aurora MySQL multi-AZ database and returns it to our web tier. Load balancing, health checks and autoscaling groups are created at each layer to maintain the availability of this architecture.
 
-# AWS Infrastructure Setup
+## Algorithm
+### AWS PROJECT
+---
 
-## AWS Services Used
+# Creating 3 Tier Architecture & Integrating Other AWS Resources
 
-### Amazon EC2 (Elastic Compute Cloud)
-Provides resizable compute capacity in the cloud, hosting the application servers.
+## Step 1: Download Code from GitHub in Your Local System
 
-### Auto Scaling Group (ASG)
-Automatically adjusts the number of EC2 instances based on traffic demands, ensuring cost-efficiency and optimal performance.
+## Step 2: Create Two S3 Buckets
+- Create one S3 bucket for storing web-server & app-server code.
+- Upload the code to your S3 from your local system.
+- Create another S3 bucket for VPC flow logs.
 
-### Application Load Balancer (ALB)
-Distributes incoming application traffic across multiple targets, such as EC2 instances, enhancing fault tolerance and availability.
+## Step 3: Create IAM Role with Policies
+- S3 read only.
+- SSM managed instance core.
 
-### AWS Identity and Access Management (IAM)
-Manages user access and permissions securely, ensuring proper governance of AWS resources.
+## Step 4: Create VPC, Subnets, IGW, NAT-GW, RT
+- Enable auto-assign public IP for web-tier public subnets.
+- Create flow logs for VPC & use the S3 bucket created above.
 
-### Amazon S3 (Simple Storage Service)
-Stores and retrieves any amount of data at any time, serving as the primary storage for static assets like images and videos.
+## Step 5: Create Security Groups
+1. **External-Load-Balancer-SG** --> HTTP (80): 0.0.0.0/0.
+2. **Web-Tier-SG** --> HTTP --> Ext-LB-SG.
+3. **Internal-Load-Balancer-SG** --> HTTP --> Web-Tier-SG.
+4. **App-Tier-SG** --> Port 4000 --> Internal-LB-SG.
+5. **DB-Tier-SG** --> MySQL (3306) --> App-Tier-SG.
 
-### Amazon EFS (Elastic File System)
-Provides scalable and shared file storage accessible from multiple EC2 instances, facilitating easy data sharing across the application.
+## Step 6: Create DB Subnet Group & RDS
+- Create DB subnet group.
+- Create RDS - Multi-AZ.
+- Place them in DB subnet group created above.
 
-### Amazon RDS (Relational Database Service)
-Simplifies database management, enabling scalable and highly available relational databases.
+## Step 7: Create Test App Server, Install Packages, Test Connections
+- [Test App-Server Commands](https://github.com/pandacloud1/AWS_Project1/blob/main/app-server-commands)
+- Create AMI.
+- Create launch template using AMI.
+- Create target group.
+- Create internal load balancer.
+- Create autoscaling group.
+- Edit `nginx.conf` file in local system by adding Internal-LB-DNS & upload the file in S3.
 
-### Amazon VPC (Virtual Private Cloud)
-Creates a secure and isolated network environment, giving control over the network topology and enhancing security.
+## Step 8: Create Test Web Server, Install Packages (Nginx, Node.js (React)), Test Connections
+- [Test Web-Server Commands](https://github.com/pandacloud1/AWS_Project1/blob/main/web-server-commands)
+- Create AMI.
+- Create launch template using AMI.
+- Create target group.
+- Create external load balancer.
+- Create autoscaling group.
 
-### Amazon CloudWatch
-Monitors application performance and resource utilization, offering alerts and logging for operational insights.
+## Step 9: Add External-ALB-DNS Record in Route 53
 
-### Amazon SNS (Simple Notification Service)
-Sends notifications and messages to users or other services based on events, enhancing communication and responsiveness.
+## Step 10: Create CloudWatch Alarms Along with SNS
 
-### AWS CloudTrail
-Logs all API calls and actions in the AWS account, supporting auditing, compliance, and governance needs.
+## Step 11: Create CloudTrail
 
-### Amazon Route 53
-Provides DNS services for reliable domain name resolution, directing users to the application endpoints.
+## Step 12: Deleting the Entire Infrastructure
+- Delete CloudFront.
+- Delete CloudWatch alarms.
+- Delete records from Route 53.
+- Delete load balancers, target groups, ASG, launch templates.
+- Delete security group.
+- Delete NAT gateway (it will take 5 mins).
+- Release elastic IP.
+- Delete VPC.
+- Delete RDS subnet group, RDS.
 
-### Amazon CloudFront
-A content delivery network (CDN) that speeds up the delivery of your web content by caching it at edge locations around the world.
+---
 
-### AWS WAF (Web Application Firewall)
-Protects web applications from common web exploits that could compromise security or availability.
 
-### AWS Shield
-Provides advanced protection against Distributed Denial of Service (DDoS) attacks, ensuring application uptime and security.
+## Workshop Instructions:
+
+See [AWS Three Tier Web Architecture](https://catalog.us-east-1.prod.workshops.aws/workshops/85cd2bb2-7f79-4e96-bdee-8078e469752a/en-US)
